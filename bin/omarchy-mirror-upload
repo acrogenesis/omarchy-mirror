@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Stop at the first failed step. Pruning after a failed database upload would
+# delete packages the databases still on R2 point at.
+set -euo pipefail
+
 # Default values
 VERBOSE_RSYNC=""
 VERBOSE_RCLONE=""
