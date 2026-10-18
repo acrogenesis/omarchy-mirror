@@ -4,12 +4,14 @@ on:
   push:
     paths:
       - bin/omarchy-mirror-stage-arm
+      - bin/omarchy-mirror-copy-stage
       - bin/omarchy-mirror-upload
       - tests/**
       - .github/workflows/arm-staging.yml
   pull_request:
     paths:
       - bin/omarchy-mirror-stage-arm
+      - bin/omarchy-mirror-copy-stage
       - bin/omarchy-mirror-upload
       - tests/**
       - .github/workflows/arm-staging.yml
@@ -34,6 +36,6 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base
     steps:
-      - run: pacman -Syu --noconfirm --needed python git
+      - run: pacman -Syu --noconfirm --needed python git rsync
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python -m unittest discover -s tests -v
