@@ -1,6 +1,14 @@
 #!/bin/bash
 
+# Publish the rc snapshot the release was tested against as
+# stable. Copy the rc stage over the stable stage, then upload that as it is.
+# omarchy-mirror-sync-stable would re-stage from upstream first and publish
+# today's Arch instead, so only the upload step runs here. lastsync comes
+# along from rc, so stable reports the snapshot it now serves.
+
+set -euo pipefail
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 rsync -a --delete /mnt/arch-mirror-rc/ /mnt/arch-mirror-stable/
-"$SCRIPT_DIR/omarchy-mirror-sync-stable"
+"$SCRIPT_DIR/omarchy-mirror-upload" --stage "/mnt/arch-mirror-stable/" --r2 "omarchy:omarchy-mirror-stable"
