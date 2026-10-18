@@ -1,8 +1,9 @@
 #!/bin/bash
-# Give rc the snapshot stable serves, so a patch release candidate is tested
-# against exactly what stable users already run and the release ships without
-# moving their Arch packages. A feature release takes a fresh snapshot with
-# omarchy-mirror-sync-rc instead.
+# Repair rc when stable serves a newer snapshot than rc, which only a re-sync of
+# stable from upstream causes. rc then serves what stable users already run, is
+# tested on it, and the release-day copy back to stable changes nothing.
+# Releases never need this: a feature release candidate takes a fresh snapshot
+# with omarchy-mirror-sync-rc, and a patch release leaves the mirrors alone.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
