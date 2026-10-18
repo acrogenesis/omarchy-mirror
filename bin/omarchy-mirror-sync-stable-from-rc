@@ -2,9 +2,9 @@
 
 # Publish the rc snapshot the release was tested against as
 # stable. Copy the rc stage over the stable stage, then upload that as it is.
-# omarchy-mirror-sync-stable would re-stage from upstream first and publish
-# today's Arch instead, so only the upload step runs here. lastsync comes
-# along from rc, so stable reports the snapshot it now serves.
+# Stable never syncs from upstream, which would publish today's Arch instead;
+# only the upload step runs here. lastsync comes along from rc, so stable
+# reports the snapshot it now serves.
 
 set -euo pipefail
 
