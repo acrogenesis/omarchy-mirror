@@ -137,12 +137,21 @@ class CopyStageTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual((rc / "lastsync").read_text(), f"{STABLE_SYNC}\n")
 
-    def test_the_release_scripts_copy_in_opposite_directions(self):
+    def test_the_release_day_copy_goes_from_rc_to_stable(self):
         stable_from_rc = (BIN / "omarchy-mirror-sync-stable-from-rc").read_text()
-        rc_from_stable = (BIN / "omarchy-mirror-sync-rc-from-stable").read_text()
 
         self.assertIn("--from /mnt/arch-mirror-rc/ --to /mnt/arch-mirror-stable/ --r2 omarchy:omarchy-mirror-stable", stable_from_rc)
-        self.assertIn("--from /mnt/arch-mirror-stable/ --to /mnt/arch-mirror-rc/ --r2 omarchy:omarchy-mirror-rc", rc_from_stable)
+
+    def test_nothing_stages_stable_from_upstream(self):
+        # Stable only ever takes rc's snapshot; a sync from upstream is how it
+        # once got ahead of rc.
+        for script in BIN.iterdir():
+            if script.is_file():
+                text = script.read_text(errors="ignore")
+                self.assertFalse(
+                    "omarchy-mirror-sync" in text and '--stage "/mnt/arch-mirror-stable/"' in text,
+                    f"{script.name} stages stable from upstream",
+                )
 
 
 if __name__ == "__main__":

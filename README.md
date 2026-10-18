@@ -20,9 +20,7 @@ bin/omarchy-mirror-sync-rc
 bin/omarchy-mirror-sync-stable-from-rc
 ```
 
-Snapshots only move forward, from upstream to rc to stable. A patch release candidate leaves the mirrors alone: since the last release, rc and stable serve the same snapshot. Both copies refuse to move a mirror to an older snapshot than it serves.
-
-If stable is ever newer than rc, which only a re-sync of stable from upstream causes, repair rc with `bin/omarchy-mirror-sync-rc-from-stable` and test rc on that snapshot before the next release.
+Snapshots only move forward, from upstream to rc to stable, and stable never syncs from upstream itself. A patch release candidate leaves the mirrors alone: since the last release, rc and stable serve the same snapshot. The copy to stable refuses to move it to an older snapshot than it serves.
 
 Promote the mirror before the packages. `stable-mirror.omarchy.org/lastsync` matches `rc-mirror.omarchy.org/lastsync` once the copy is up, and only then should stable packages be promoted. Stable packages built against the new snapshot would otherwise reach machines that still get the old one.
 
