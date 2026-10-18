@@ -2,11 +2,25 @@
 
 Dedicated mirror of Arch core/extra/multilib repositories for Omarchy hosted on Cloudflare R2.
 
-## Stable vs edge
+## Edge, rc and stable
 
-The stable mirror is the default for Omarchy. It's located at `https://stable-mirror.omarchy.org/`, and it typically runs one month behind the very latest. This allows the Omarchy team time to catch any incompatibilities with new libraries or tools, so that problems can be fixed before they're rolled out to everyone. The mirror may be updated more frequently as needed to address security issues or general releases.
+The stable mirror is the default for Omarchy. It's located at `https://stable-mirror.omarchy.org/`, and it serves the Arch snapshot the current Omarchy release was tested against. It changes only when a release ships, so new libraries and tools reach everyone after an rc has been tested on them.
+
+The rc mirror, `https://rc-mirror.omarchy.org/`, holds the snapshot taken when a release candidate is cut. Release candidates are tested against it.
 
 The edge mirror tracks the very latest Arch repositories every hour. It's located at `https://mirror.omarchy.org/`. Omarchy users can switch to this using _Update > Channel > Edge_ in the Omarchy Menu.
+
+On the mirror host:
+
+```sh
+# When a release candidate is cut: a fresh Arch snapshot for rc
+bin/omarchy-mirror-sync-rc
+
+# On release day, before stable packages are promoted: stable gets the rc snapshot as it is
+bin/omarchy-mirror-sync-stable-from-rc
+```
+
+Promote the mirror before the packages. `stable-mirror.omarchy.org/lastsync` matches `rc-mirror.omarchy.org/lastsync` once the copy is up, and only then should stable packages be promoted. Stable packages built against the new snapshot would otherwise reach machines that still get the old one.
 
 ## Arch Linux ARM: local HTTP staging
 

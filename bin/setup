@@ -10,10 +10,15 @@ mkdir -p ~/.config/rclone
 cp /root/omarchy-mirror/config/rclone.conf ~/.config/rclone/rclone.conf
 echo "You must insert credentials manually in ~/.config/rclone/rclone.conf"
 
+# Stable changes only on release day (omarchy-mirror-sync-stable-from-rc), so
+# remove the monthly timers that used to re-stage and upload it from upstream.
+for unit in omarchy-mirror-stage-stable omarchy-mirror-upload-stable; do
+  systemctl disable --now "$unit.timer" 2>/dev/null || true
+  rm -f "/etc/systemd/system/$unit.timer" "/etc/systemd/system/$unit.service"
+done
+
 # Install hourly mirror service
 cp /root/omarchy-mirror/config/*mirror* /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable --now omarchy-mirror-sync.timer
 systemctl enable --now omarchy-mirror-t2-sync.timer
-systemctl enable --now omarchy-mirror-stage-stable.timer
-systemctl enable --now omarchy-mirror-upload-stable.timer
