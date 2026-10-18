@@ -4,11 +4,13 @@ on:
   push:
     paths:
       - bin/omarchy-mirror-stage-arm
+      - bin/omarchy-mirror-upload
       - tests/**
       - .github/workflows/arm-staging.yml
   pull_request:
     paths:
       - bin/omarchy-mirror-stage-arm
+      - bin/omarchy-mirror-upload
       - tests/**
       - .github/workflows/arm-staging.yml
 
