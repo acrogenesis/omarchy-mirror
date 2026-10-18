@@ -13,8 +13,12 @@ The edge mirror tracks the very latest Arch repositories every hour. It's locate
 On the mirror host:
 
 ```sh
-# When a release candidate is cut: a fresh Arch snapshot for rc
+# When a feature release candidate is cut: a fresh Arch snapshot for rc
 bin/omarchy-mirror-sync-rc
+
+# When a patch release candidate is cut: rc gets the snapshot stable serves, so
+# the patch ships without moving stable's Arch packages
+bin/omarchy-mirror-sync-rc-from-stable
 
 # On release day, before stable packages are promoted: stable gets the rc snapshot as it is
 bin/omarchy-mirror-sync-stable-from-rc

@@ -1,0 +1,70 @@
+#!/bin/bash
+# Publish one channel's Arch snapshot as another's, as it is: rc as stable on
+# release day, stable as rc for a patch release. Copy the source stage over the
+# target stage, then upload that. lastsync comes along, so the target reports
+# the snapshot it now serves.
+#
+# It refuses a source stage without a snapshot, which rsync --delete would
+# publish as an empty mirror, one missing a repository the target serves, which
+# would delete it there and on R2, and a copy that would move the target back to
+# an older snapshot than the one its machines already run, or that can't tell.
+set -euo pipefail
+
+usage="Usage: $0 --from STAGE --to STAGE --r2 R2"
+while [[ $# -gt 0 ]]; do
+  case $1 in
+  --from)
+    FROM="${2%/}/"
+    shift 2
+    ;;
+  --to)
+    TO="${2%/}/"
+    shift 2
+    ;;
+  --r2)
+    R2="$2"
+    shift 2
+    ;;
+  *)
+    echo "Unknown option: $1"
+    echo "$usage"
+    exit 1
+    ;;
+  esac
+done
+if [[ -z ${FROM:-} || -z ${TO:-} || -z ${R2:-} ]]; then
+  echo "$usage"
+  exit 1
+fi
+
+# The snapshot a stage holds: its lastsync stamp.
+snapshot() {
+  local stamp
+  stamp=$(cat "$1/lastsync" 2>/dev/null) || return 1
+  [[ $stamp =~ ^[0-9]+$ ]] && echo "$stamp"
+}
+
+if ! from_sync=$(snapshot "$FROM") || [[ ! -s ${FROM}core/os/x86_64/core.db ]]; then
+  echo "$FROM holds no complete Arch snapshot, so it is not copied" >&2
+  exit 1
+fi
+for db in "$TO"*/os/*/*.db; do
+  [[ -e $db ]] || continue
+  if [[ ! -s $FROM${db#"$TO"} ]]; then
+    echo "$FROM has no ${db#"$TO"}, which $TO serves, so it is not copied" >&2
+    exit 1
+  fi
+done
+to_sync=""
+if [[ -n $(ls -A "$TO" 2>/dev/null) ]] && ! to_sync=$(snapshot "$TO"); then
+  echo "$TO has no readable lastsync to compare with $FROM's, so it is not copied over" >&2
+  exit 1
+fi
+if [[ -n $to_sync ]] && ((to_sync > from_sync)); then
+  echo "$TO serves a newer snapshot ($to_sync) than $FROM ($from_sync); copying would move its machines back" >&2
+  exit 1
+fi
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+rsync -a --delete "$FROM" "$TO"
+"$SCRIPT_DIR/omarchy-mirror-upload" --stage "$TO" --r2 "$R2"
