@@ -60,6 +60,11 @@ echo "Start syncing Omarchy ARM mirror"
 "$SCRIPT_DIR/omarchy-mirror-stage-arm" --stage "$STAGE" --upstream "$UPSTREAM" \
   --repos core extra alarm aur --workers 16 --prune --keyring "$KEYRING" \
   --recover-null-records --publish-degraded "${allow[@]}"
+# The snapshot the whole mirror now serves, at /lastsync as on x86_64's:
+# omarchy-release and omarchy-mirror-promote-arm compare it. Every repository
+# was staged by this run, so [core]'s stamp is all of theirs. The stager keeps
+# freshness per repository, since it can be run for some of them.
+cp "${STAGE%/}/aarch64/core/lastsync" "${STAGE%/}/lastsync"
 "$SCRIPT_DIR/omarchy-mirror-upload-arm" --stage "$STAGE" --r2 "$R2" ${VERBOSE:+--verbose}
 
 echo "Finished syncing Omarchy ARM mirror in ${SECONDS}s"

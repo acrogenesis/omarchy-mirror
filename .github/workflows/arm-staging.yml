@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - bin/omarchy-mirror-stage-arm
+      - bin/omarchy-mirror-sync-arm
+      - bin/omarchy-mirror-upload-arm
+      - bin/omarchy-mirror-promote-arm
       - bin/omarchy-mirror-copy-stage
       - bin/omarchy-mirror-upload
       - tests/**
@@ -11,6 +14,9 @@ on:
   pull_request:
     paths:
       - bin/omarchy-mirror-stage-arm
+      - bin/omarchy-mirror-sync-arm
+      - bin/omarchy-mirror-upload-arm
+      - bin/omarchy-mirror-promote-arm
       - bin/omarchy-mirror-copy-stage
       - bin/omarchy-mirror-upload
       - tests/**
@@ -36,6 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     container: archlinux:base
     steps:
-      - run: pacman -Syu --noconfirm --needed python git rsync
+      # rclone for the ARM promote and upload tests, which run the real one
+      # over local directories; the Python job above skips them.
+      - run: pacman -Syu --noconfirm --needed python git rsync rclone
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: python -m unittest discover -s tests -v

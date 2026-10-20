@@ -35,6 +35,38 @@ if [[ $FROM != *:* || $TO != *:* ]]; then
   exit 1
 fi
 
+# The snapshot a bucket serves: its lastsync stamp, or, in one last published
+# before the mirror had that, its [core]'s, which every full sync stamps with the
+# same run.
+snapshot() {
+  local stamp
+  stamp=$(rclone cat "$1/lastsync" 2>/dev/null) || stamp=""
+  [[ -n $stamp ]] || stamp=$(rclone cat "$1/aarch64/core/lastsync" 2>/dev/null) || return 1
+  stamp=${stamp%%$'\n'*}
+  [[ $stamp =~ ^[0-9]+$ ]] && echo "$stamp"
+}
+
+# Snapshots only move forward: a promote that would serve the destination's
+# machines an older snapshot than they have is refused, as on x86_64
+# (omarchy-mirror-copy-stage).
+if ! from_sync=$(snapshot "$FROM"); then
+  echo "Refusing to promote $FROM: it has no readable lastsync" >&2
+  exit 1
+fi
+if to_sync=$(snapshot "$TO"); then
+  if ((to_sync > from_sync)); then
+    echo "Refusing to promote $FROM over $TO: $TO serves a newer snapshot ($to_sync) than $FROM ($from_sync); copying would move its machines back" >&2
+    exit 1
+  fi
+elif ! listing=$(rclone lsf "$TO" --max-depth 1 2>/dev/null); then
+  # Unreadable is not empty: a read that failed must not let the copy through.
+  echo "Refusing to promote $FROM over $TO: $TO cannot be listed" >&2
+  exit 1
+elif [[ -n $listing ]]; then
+  echo "Refusing to promote $FROM over $TO: $TO has no readable lastsync to compare with" >&2
+  exit 1
+fi
+
 # The source may be published to while it is being copied, which could leave
 # the destination with newer databases than packages. Copy again until the
 # source's databases are the same before and after.
