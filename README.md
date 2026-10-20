@@ -102,7 +102,9 @@ Two options on the stager make it fit for unattended use:
 
 `omarchy-mirror-upload-arm` uploads packages and signatures first, then the databases, then prunes what the stage no longer holds. It holds the stage lock throughout and refuses a stage whose last run was not `complete`, did not check signatures, or did not cover every repository in the tree. Databases are compared by checksum. Packages from the local stage are compared by time against the time R2 received its copy, which costs nothing beyond the listing; that would miss a same-name replacement stamped older than its upload, so keep the clock synced and do not restore a stage with its old timestamps. Packages above 200 MiB go up in parts with their MD5 stored on the object, so files above R2's 5 GiB single-request limit work and a promote can compare them.
 
-rc and stable are never synced from upstream. `omarchy-mirror-promote-arm` copies one bucket onto another, server-side and by checksum. It refuses an empty source and copies again if the source's databases changed while it ran. A first full copy is about 27,000 objects and takes a few minutes; later ones copy only what changed. Nothing runs it on a schedule:
+Each run stamps the whole mirror at `/lastsync`, as x86_64's is, beside each repository's own `aarch64/<repo>/lastsync`: the stager can be run for some repositories only, so it keeps freshness per repository, and the hourly job, which stages all four, gives the root [core]'s stamp. The stamps go up last, once every database they stand for is up.
+
+rc and stable are never synced from upstream. `omarchy-mirror-promote-arm` copies one bucket onto another, server-side and by checksum. It refuses an empty source, a destination it cannot list, refuses to serve a bucket's machines an older snapshot than they have (comparing `/lastsync`, or `aarch64/core/lastsync` in a bucket last published without one), and copies again if the source's databases changed while it ran. A first full copy is about 27,000 objects and takes a few minutes; later ones copy only what changed. Nothing runs it on a schedule:
 
 ```sh
 # When a release candidate is cut

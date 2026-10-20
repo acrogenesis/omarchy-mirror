@@ -76,8 +76,13 @@ fi
 # at most transfers x concurrency x chunk size, 4 GiB here.
 COMMON=(--fast-list --s3-no-head --transfers=64 --checkers=64
   --s3-upload-concurrency=4 --s3-chunk-size=16M $VERBOSE_RCLONE)
-INDEX=(--include '**/*.db' --include '**/*.db.*' --include '**/*.files' --include '**/*.files.*' --include '**/lastsync')
-NOT_INDEX=(--exclude '**/*.db' --exclude '**/*.db.*' --exclude '**/*.files' --exclude '**/*.files.*' --exclude '**/lastsync')
+# The freshness stamps go up on their own, last: a stamp says which snapshot is
+# served, so it must not arrive while a database it stands for might still
+# fail. '**/lastsync' matches the repositories' stamps but not the mirror's own
+# at the root, which omarchy-release compares.
+INDEX=(--include '**/*.db' --include '**/*.db.*' --include '**/*.files' --include '**/*.files.*')
+STAMPS=(--include '**/lastsync' --include '/lastsync')
+NOT_INDEX=(--exclude '**/*.db' --exclude '**/*.db.*' --exclude '**/*.files' --exclude '**/*.files.*' --exclude '**/lastsync' --exclude '/lastsync')
 
 # How a file is judged unchanged. Databases are small and are what clients
 # read first, so they are always compared by checksum. Between two buckets
@@ -101,11 +106,15 @@ fi
 echo "Upload packages from $STAGE to $R2"
 rclone copy "$STAGE" "$R2" "${COMMON[@]}" "${PACKAGE_CHANGED[@]}" "${NOT_INDEX[@]}"
 
-# 2) Publish db/files + freshness markers, now that every package they name is there
-echo "Upload db/files + lastsync from $STAGE to $R2"
+# 2) Publish db/files, now that every package they name is there
+echo "Upload db/files from $STAGE to $R2"
 rclone copy "$STAGE" "$R2" "${COMMON[@]}" "${INDEX_CHANGED[@]}" "${INDEX[@]}"
 
-# 3) Prune what is no longer in the stage (safe after the databases)
+# 3) The freshness stamps, now that every database they stand for is there
+echo "Upload lastsync from $STAGE to $R2"
+rclone copy "$STAGE" "$R2" "${COMMON[@]}" "${INDEX_CHANGED[@]}" "${STAMPS[@]}"
+
+# 4) Prune what is no longer in the stage (safe after the databases)
 echo "Prune removed files on $R2"
 rclone sync "$STAGE" "$R2" "${COMMON[@]}" "${PACKAGE_CHANGED[@]}"
 
